@@ -10,7 +10,6 @@ import com.cherrystudios.bamboo.base.BaseFragment
 import com.cherrystudios.bamboo.databinding.FragmentMainBinding
 
 class MainFragment : BaseFragment() {
-
     companion object {
         fun newInstance(): Fragment {
             val fragment = MainFragment()
