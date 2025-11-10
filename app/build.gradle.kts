@@ -42,7 +42,7 @@ android {
         buildConfig = true
         viewBinding = true
         aidl = false
-        compose = false
+        compose = true
         prefab = false
         renderScript = false
         resValues = false
@@ -59,8 +59,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.coil)
+    implementation(libs.timber)
     implementation(project(":core"))
     implementation(project(":ui"))
+    implementation(libs.tencent.mmkv)
     testImplementation(libs.junit4)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
@@ -70,8 +72,8 @@ dependencies {
     implementation(libs.bundles.kotlinx.coroutines)
     implementation(libs.compose.compiler)
     implementation(libs.activity.compose)
-    implementation(libs.navigation.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
