@@ -1,12 +1,20 @@
 package com.cherrystudios.bamboo.ui.main
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
+import android.os.IBinder
+import android.provider.MediaStore
 import android.provider.Settings
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -14,12 +22,21 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.cherrystudios.bamboo.R
+import com.cherrystudios.bamboo.adapter.MusicItemAdapter
 import com.cherrystudios.bamboo.base.BaseFragment
+import com.cherrystudios.bamboo.constant.ACTION_MUSIC_PROGRESS
+import com.cherrystudios.bamboo.constant.EXTRA_DURATION
+import com.cherrystudios.bamboo.constant.EXTRA_POSITION
 import com.cherrystudios.bamboo.databinding.FragmentMainBinding
+import com.cherrystudios.bamboo.service.MusicPlayService
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import kotlin.jvm.java
 
 class MainFragment : BaseFragment() {
     companion object {
@@ -35,6 +52,30 @@ class MainFragment : BaseFragment() {
     private val binding get() = _binding!!
 
     private lateinit var viewModel: MainViewModel
+    private lateinit var adapter: MusicItemAdapter
+
+    private var musicService: MusicPlayService? = null
+    private var isBound = false
+    private val progressReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val pos = intent?.getLongExtra(EXTRA_POSITION, 0L) ?: 0L
+            val dur = intent?.getLongExtra(EXTRA_DURATION, 0L) ?: 0L
+            binding.playControl.progressHorizontal.progress = ((pos * 100) / dur).toInt()
+        }
+    }
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as MusicPlayService.MusicBinder
+            musicService = binder.getService()
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBound = false
+            musicService = null
+        }
+    }
 
     private val requestPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -66,7 +107,7 @@ class MainFragment : BaseFragment() {
 
     private fun checkPermissions() {
         val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
+            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
         } else {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
@@ -94,17 +135,42 @@ class MainFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        checkPermissions()
+        adapter = MusicItemAdapter()
+        adapter.setOnItemClickListener { position ->
+            val audioFile = adapter.data[position]
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, audioFile.id)
+            musicService?.play(uri)
+        }
+        binding.recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.adapter = adapter
 
-        lifecycleScope.launch {
-            viewModel.audioFiles.collect { audioFiles ->
-                updateAudioFiles(audioFiles)
-            }
+        binding.playControl.btnPlayPause.setOnClickListener {
+            musicService?.playPause()
         }
 
-        lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                updateUI(state)
+        binding.playControl.btnPlayNext.setOnClickListener {
+            // TODO
+        }
+
+        binding.playControl.btnPlayPrevious.setOnClickListener {
+            // TODO
+        }
+
+        checkPermissions()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.audioFiles.collect { audioFiles ->
+                        updateAudioFiles(audioFiles)
+                    }
+                }
+                launch {
+                    viewModel.uiState.collect { state ->
+                        updateUI(state)
+                    }
+                }
             }
         }
     }
@@ -116,12 +182,44 @@ class MainFragment : BaseFragment() {
 
     fun updateAudioFiles(audioFiles: List<AudioFile>) {
         if (audioFiles.isNotEmpty()) {
-            val result = audioFiles.joinToString("\n") { it.toString() }
-            binding.tvMessage.text = result
+            adapter.data += audioFiles.filterNot { it in adapter.data }
         }
     }
 
     fun updateUI(uiState: UiState) {
-        binding.progressCircular.visibility = if(uiState.isLoading)  View.VISIBLE else View.GONE
+        binding.progressCircular.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Intent(context, MusicPlayService::class.java).also { intent ->
+            activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (isBound) {
+            activity?.unbindService(connection)
+            isBound = false
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        context?.run {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS), Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS))
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        context?.run {
+            unregisterReceiver(progressReceiver)
+        }
     }
 }

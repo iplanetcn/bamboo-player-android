@@ -41,6 +41,6 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.bundles.androidx.media3)
     testImplementation(libs.junit4)
-    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.junit.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
 }

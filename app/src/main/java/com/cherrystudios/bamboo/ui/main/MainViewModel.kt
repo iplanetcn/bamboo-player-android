@@ -1,12 +1,15 @@
 package com.cherrystudios.bamboo.ui.main
 
 import android.app.Application
+import android.content.ContentUris
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cherrystudios.bamboo.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +40,8 @@ class MainViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
+
+    private val currentSong = MutableStateFlow<Song?>(null)
 
     fun queryMediaAudio(applicationContext: Application) {
         viewModelScope.launch {
@@ -111,6 +116,10 @@ class MainViewModel : ViewModel() {
                 Timber.d("Found none audio file")
             }
         }
+        audioList.firstOrNull()?.apply {
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+            Timber.d("First audio file's uri: $uri")
+        }
         audioList
     }
 
@@ -118,7 +127,7 @@ class MainViewModel : ViewModel() {
         // 扫描文件
         MediaScannerConnection.scanFile(
             context,
-            arrayOf("/sdcard/"),  // File path(s)
+            arrayOf(Environment.getExternalStorageDirectory().path),  // File path(s)
             null  // MIME type (null auto-detects)
         ) { path, uri ->
             Timber.d("Scan complete for path: $path, uri: $uri")

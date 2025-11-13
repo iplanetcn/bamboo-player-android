@@ -72,7 +72,7 @@ androidx-dataStore-proto-rxjava3 = { module = "androidx.datastore:datastore-rxja
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "androidxExifinterface" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "androidxFragment" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "androidxFragment" }
-androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExt" }
+androidx-junit-ext = { module = "androidx.test.ext:junit", version.ref = "androidxTestExt" }
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "androidxLifecycle" }
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidxLifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidxLifecycle" }
@@ -105,6 +105,7 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref="androidxMedia" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref="androidxMedia" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref="androidxMedia" }
+androidx-media3-session = { module = "androidx.media3:media3-session", version.ref="androidxMedia" }
 coil = { module = "io.coil-kt:coil", version.ref = "coil" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 glide-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
@@ -158,7 +159,8 @@ compose-ui-viewbinding = { module = "androidx.compose.ui:ui-viewbinding" }
 androidx-media3 = [
     "androidx-media3-exoplayer",
     "androidx-media3-exoplayer-dash",
-    "androidx-media3-ui"
+    "androidx-media3-ui",
+    "androidx-media3-session"
 ]
 
 compose = [
