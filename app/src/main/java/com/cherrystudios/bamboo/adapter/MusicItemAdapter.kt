@@ -1,8 +1,8 @@
 package com.cherrystudios.bamboo.adapter
 
-import android.R.attr.data
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.cherrystudios.bamboo.databinding.ItemMusicBinding
 import com.cherrystudios.bamboo.ui.main.AudioFile
@@ -13,9 +13,36 @@ import com.cherrystudios.bamboo.ui.main.AudioFile
  * @author john
  * @since 2025-11-13
  */
+class MusicItemAdapterV2() : ListAdapter<AudioFile, MusicItemViewHodler>(AudioFile.DIFF_CALLBACK) {
+    private var onItemClick: ((Int) -> Unit)? = null
+
+    fun setOnItemClickListener(listener: (Int) -> Unit) {
+        onItemClick = listener
+    }
+
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): MusicItemViewHodler {
+        val binding = ItemMusicBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return MusicItemViewHodler(binding)
+    }
+
+    override fun onBindViewHolder(holder: MusicItemViewHodler, position: Int) {
+        holder.bind(getItem(position))
+        holder.binding.root.setOnClickListener {
+            onItemClick?.invoke(position)
+        }
+    }
+
+    fun getItemAt(position: Int): AudioFile {
+        return getItem(position)
+    }
+}
+
 class MusicItemAdapter(
     val data: MutableList<AudioFile> = mutableListOf()
-): RecyclerView.Adapter<MusicItemViewHodler>() {
+) : RecyclerView.Adapter<MusicItemViewHodler>() {
     private var onItemClick: ((Int) -> Unit)? = null
 
     fun setOnItemClickListener(listener: (Int) -> Unit) {
@@ -45,7 +72,7 @@ class MusicItemAdapter(
     }
 }
 
-class MusicItemViewHodler(val binding: ItemMusicBinding): RecyclerView.ViewHolder(binding.root) {
+class MusicItemViewHodler(val binding: ItemMusicBinding) : RecyclerView.ViewHolder(binding.root) {
     fun bind(file: AudioFile) {
         binding.tvTitle.text = file.displayName
         binding.tvSubtitle.text = file.artist

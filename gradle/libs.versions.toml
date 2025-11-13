@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "8.13.0"
+androidGradlePlugin = "8.13.1"
 coil = "2.7.0"
 constraintlayoutCompose = "1.1.1"
 composeCompiler = "1.5.15"

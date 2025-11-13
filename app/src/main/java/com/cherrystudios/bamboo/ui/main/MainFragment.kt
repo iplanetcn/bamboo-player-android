@@ -1,7 +1,6 @@
 package com.cherrystudios.bamboo.ui.main
 
 import android.Manifest
-import android.R.attr.fragment
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentUris
@@ -29,6 +28,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.cherrystudios.bamboo.R
 import com.cherrystudios.bamboo.adapter.MusicItemAdapter
+import com.cherrystudios.bamboo.adapter.MusicItemAdapterV2
 import com.cherrystudios.bamboo.base.BaseFragment
 import com.cherrystudios.bamboo.constant.ACTION_MUSIC_PROGRESS
 import com.cherrystudios.bamboo.constant.EXTRA_DURATION
@@ -118,8 +118,6 @@ class MainFragment : BaseFragment() {
             // TODO
         }
 
-        checkPermissions()
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -134,6 +132,8 @@ class MainFragment : BaseFragment() {
                 }
             }
         }
+
+        checkPermissions()
     }
 
     override fun onDestroyView() {
@@ -170,7 +170,10 @@ class MainFragment : BaseFragment() {
 
     fun updateAudioFiles(audioFiles: List<AudioFile>) {
         if (audioFiles.isNotEmpty()) {
-            adapter.data += audioFiles.filterNot { it in adapter.data }
+            with(adapter) {
+                data += audioFiles.filterNot { it in data }
+                notifyDataSetChanged()
+            }
         }
     }
 

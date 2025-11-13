@@ -5,7 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/cardview_light_background"
     android:padding="8dp">
 
     <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -17,6 +16,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:wavelength="24dp"
+        app:waveAmplitude="5dp"
+        app:waveSpeed="10dp"
         tools:progress="50" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -33,30 +35,27 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_play_previous"
+            style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/content_description_play_previous"
-            app:icon="@drawable/media3_icon_previous"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp" />
+            app:icon="@drawable/media3_icon_previous" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_play_pause"
+            style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/content_description_play_pause"
-            app:icon="@drawable/media3_icon_play"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp" />
+            app:icon="@drawable/media3_icon_play" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_play_next"
+            style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/content_description_play_next"
-            app:icon="@drawable/media3_icon_next"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp" />
+            app:icon="@drawable/media3_icon_next" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.constraintlayout.widget.ConstraintLayout>

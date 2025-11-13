@@ -9,6 +9,8 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import com.cherrystudios.bamboo.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,9 +33,28 @@ data class AudioFile(
     val artist: String?,
     val duration: Int,
     val size: Int
-)
+) {
+    companion object {
+        val DIFF_CALLBACK: DiffUtil.ItemCallback<AudioFile> = object : DiffUtil.ItemCallback<AudioFile>() {
+            override fun areItemsTheSame(
+                oldItem: AudioFile,
+                newItem: AudioFile
+            ): Boolean {
+                return oldItem.id == newItem.id
+            }
+
+            override fun areContentsTheSame(
+                oldItem: AudioFile,
+                newItem: AudioFile
+            ): Boolean {
+                return oldItem == newItem
+            }
+        }
+    }
+}
 
 class MainViewModel : ViewModel() {
+
 
     private val _audioFiles = MutableStateFlow<List<AudioFile>>(emptyList())
     val audioFiles = _audioFiles.asStateFlow()
@@ -42,7 +63,7 @@ class MainViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     private val _currentSong = MutableStateFlow<Song?>(null)
-    val currentSong = _currentSong.asStateFlow() 
+    val currentSong = _currentSong.asStateFlow()
 
     fun queryMediaAudio(applicationContext: Application) {
         viewModelScope.launch {
@@ -62,65 +83,66 @@ class MainViewModel : ViewModel() {
     /**
      * 查询音频文件
      */
-    private suspend fun queryAudioFiles(applicationContext: Application): List<AudioFile> = withContext(Dispatchers.IO) {
-        val audioList = mutableListOf<AudioFile>()
+    private suspend fun queryAudioFiles(applicationContext: Application): List<AudioFile> =
+        withContext(Dispatchers.IO) {
+            val audioList = mutableListOf<AudioFile>()
 
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.DISPLAY_NAME,
-            MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.SIZE,
-            MediaStore.Audio.Media.ARTIST,
-        )
-        val selection = "${MediaStore.Audio.Media.DURATION} >= ?"
-        val selectionArgs = arrayOf(
-            TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS).toString()
-        )
-        val sortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
+            val projection = arrayOf(
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.ARTIST,
+            )
+            val selection = "${MediaStore.Audio.Media.DURATION} >= ?"
+            val selectionArgs = arrayOf(
+                TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS).toString()
+            )
+            val sortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
 
-        val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        } else {
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        }
-
-        val query = applicationContext.contentResolver.query(
-            collection,
-            projection,
-            selection,
-            selectionArgs,
-            sortOrder
-        )
-        Timber.d("--- Start query audio files ---")
-        query?.use { cursor ->
-            if (cursor.count > 0) {
-                Timber.d("Found ${cursor.count} file(s)")
-                while (cursor.moveToNext()) {
-                    val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                    val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-                    val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-                    val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-                    val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-
-                    val id = cursor.getLong(idColumn)
-                    val displayName = cursor.getString(displayNameColumn)
-                    val duration = cursor.getInt(durationColumn)
-                    val size = cursor.getInt(sizeColumn)
-                    val artist = cursor.getString(artistColumn)
-                    val audioFile = AudioFile(id, displayName, artist, duration, size)
-                    audioList.add(audioFile)
-                    Timber.d("id: $id, displayName: $displayName, artist: $artist, duration: $duration, size: $size")
-                }
+            val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
             } else {
-                Timber.d("Found none audio file")
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
+
+            val query = applicationContext.contentResolver.query(
+                collection,
+                projection,
+                selection,
+                selectionArgs,
+                sortOrder
+            )
+            Timber.d("--- Start query audio files ---")
+            query?.use { cursor ->
+                if (cursor.count > 0) {
+                    Timber.d("Found ${cursor.count} file(s)")
+                    while (cursor.moveToNext()) {
+                        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                        val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+                        val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+
+                        val id = cursor.getLong(idColumn)
+                        val displayName = cursor.getString(displayNameColumn)
+                        val duration = cursor.getInt(durationColumn)
+                        val size = cursor.getInt(sizeColumn)
+                        val artist = cursor.getString(artistColumn)
+                        val audioFile = AudioFile(id, displayName, artist, duration, size)
+                        audioList.add(audioFile)
+                        Timber.d("id: $id, displayName: $displayName, artist: $artist, duration: $duration, size: $size")
+                    }
+                } else {
+                    Timber.d("Found none audio file")
+                }
+            }
+            audioList.firstOrNull()?.apply {
+                val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+                Timber.d("First audio file's uri: $uri")
+            }
+            audioList
         }
-        audioList.firstOrNull()?.apply {
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            Timber.d("First audio file's uri: $uri")
-        }
-        audioList
-    }
 
     fun scanAudioFiles(context: Context) {
         // 扫描文件
