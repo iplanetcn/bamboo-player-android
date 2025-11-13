@@ -1,6 +1,7 @@
 package com.cherrystudios.bamboo.ui.main
 
 import android.Manifest
+import android.R.attr.fragment
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentUris
@@ -33,6 +34,7 @@ import com.cherrystudios.bamboo.constant.ACTION_MUSIC_PROGRESS
 import com.cherrystudios.bamboo.constant.EXTRA_DURATION
 import com.cherrystudios.bamboo.constant.EXTRA_POSITION
 import com.cherrystudios.bamboo.databinding.FragmentMainBinding
+import com.cherrystudios.bamboo.extension.registerReceiverCompat
 import com.cherrystudios.bamboo.service.MusicPlayService
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -42,10 +44,7 @@ import kotlin.jvm.java
 class MainFragment : BaseFragment() {
     companion object {
         fun newInstance(): Fragment {
-            val fragment = MainFragment()
-            val args = Bundle()
-            fragment.arguments = args
-            return fragment
+            return MainFragment().apply { arguments = Bundle() }
         }
     }
 
@@ -79,51 +78,11 @@ class MainFragment : BaseFragment() {
         }
     }
 
-    private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (permissions.entries.all { it.value }) {
-                // All permissions granted.
-                viewModel.queryMediaAudio(requireActivity().application)
-            } else {
-                // Permissions denied.
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(R.string.permission_dialog_title))
-                    .setMessage(getString(R.string.permission_dialog_message))
-                    .setPositiveButton(getString(R.string.permission_dialog_positive_button)) { _, _ ->
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        val uri = Uri.fromParts("package", requireContext().packageName, null)
-                        intent.data = uri
-                        startActivity(intent)
-                    }
-                    .setNegativeButton(getString(R.string.permission_dialog_negative_button)) { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .show()
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
     }
 
-    private fun checkPermissions() {
-        val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-
-        val permissionsNotGranted = permissionsToRequest.filter {
-            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (permissionsNotGranted.isEmpty()) {
-            viewModel.queryMediaAudio(requireActivity().application)
-        } else {
-            requestPermissionsLauncher.launch(permissionsNotGranted.toTypedArray())
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -182,16 +141,6 @@ class MainFragment : BaseFragment() {
         _binding = null
     }
 
-    fun updateAudioFiles(audioFiles: List<AudioFile>) {
-        if (audioFiles.isNotEmpty()) {
-            adapter.data += audioFiles.filterNot { it in adapter.data }
-        }
-    }
-
-    fun updateUI(uiState: UiState) {
-        binding.progressCircular.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
-    }
-
     override fun onStart() {
         super.onStart()
         Intent(context, MusicPlayService::class.java).also { intent ->
@@ -209,19 +158,65 @@ class MainFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.run {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS), Context.RECEIVER_EXPORTED)
-            } else {
-                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS))
-            }
-        }
+        activity?.run { registerReceiverCompat(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS)) }
     }
 
     override fun onPause() {
         super.onPause()
         activity?.run {
             unregisterReceiver(progressReceiver)
+        }
+    }
+
+    fun updateAudioFiles(audioFiles: List<AudioFile>) {
+        if (audioFiles.isNotEmpty()) {
+            adapter.data += audioFiles.filterNot { it in adapter.data }
+        }
+    }
+
+    fun updateUI(uiState: UiState) {
+        binding.progressCircular.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+    }
+
+
+    /**
+     * 检查权限
+     */
+    private fun checkPermissions() {
+        val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        val permissionsNotGranted = permissionsToRequest.filter {
+            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (permissionsNotGranted.isEmpty()) {
+            viewModel.queryMediaAudio(requireActivity().application)
+        } else {
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+                if (permissions.entries.all { it.value }) {
+                    // All permissions granted.
+                    viewModel.queryMediaAudio(requireActivity().application)
+                } else {
+                    // Permissions denied.
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(getString(R.string.permission_dialog_title))
+                        .setMessage(getString(R.string.permission_dialog_message))
+                        .setPositiveButton(getString(R.string.permission_dialog_positive_button)) { _, _ ->
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val uri = Uri.fromParts("package", requireContext().packageName, null)
+                            intent.data = uri
+                            startActivity(intent)
+                        }
+                        .setNegativeButton(getString(R.string.permission_dialog_negative_button)) { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .show()
+                }
+            }.launch(permissionsNotGranted.toTypedArray())
         }
     }
 }
