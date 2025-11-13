@@ -41,7 +41,8 @@ class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
 
-    private val currentSong = MutableStateFlow<Song?>(null)
+    private val _currentSong = MutableStateFlow<Song?>(null)
+    val currentSong = _currentSong.asStateFlow() 
 
     fun queryMediaAudio(applicationContext: Application) {
         viewModelScope.launch {
@@ -78,9 +79,7 @@ class MainViewModel : ViewModel() {
         val sortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
 
         val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Audio.Media.getContentUri(
-                MediaStore.VOLUME_EXTERNAL
-            )
+            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         } else {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }

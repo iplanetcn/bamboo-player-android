@@ -13,34 +13,50 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:max="100"
+        android:progress="0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:progress="50" />
 
-    <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/btn_play_pause"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/layout_action_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/media3_icon_play"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        app:divider="@drawable/divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progress_horizontal" />
+        app:layout_constraintTop_toBottomOf="@id/progress_horizontal"
+        app:showDividers="middle">
 
-    <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/btn_play_previous"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/media3_icon_previous"
-        app:layout_constraintEnd_toStartOf="@id/btn_play_pause"
-        app:layout_constraintTop_toBottomOf="@id/progress_horizontal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_play_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/content_description_play_previous"
+            app:icon="@drawable/media3_icon_previous"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
 
-    <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/btn_play_next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/media3_icon_next"
-        app:layout_constraintStart_toEndOf="@id/btn_play_pause"
-        app:layout_constraintTop_toBottomOf="@id/progress_horizontal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/content_description_play_pause"
+            app:icon="@drawable/media3_icon_play"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_play_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/content_description_play_next"
+            app:icon="@drawable/media3_icon_next"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.constraintlayout.widget.ConstraintLayout>

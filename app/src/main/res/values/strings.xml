@@ -4,4 +4,7 @@
     <string name="permission_dialog_message">This app needs permission to access your media files. Please grant the permission in the app settings.</string>
     <string name="permission_dialog_positive_button">Settings</string>
     <string name="permission_dialog_negative_button">Cancel</string>
+    <string name="content_description_play_next">Play Next</string>
+    <string name="content_description_play_pause">Play or Pause</string>
+    <string name="content_description_play_previous">Play Previous</string>
 </resources>

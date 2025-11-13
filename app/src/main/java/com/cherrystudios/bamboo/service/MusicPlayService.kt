@@ -19,8 +19,8 @@ import com.cherrystudios.bamboo.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -60,28 +60,31 @@ class MusicPlayService: Service() {
     private fun startProgressUpdate() {
         progressJob?.cancel()
         progressJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isActive) {
+            while (coroutineContext.isActive) {
                 val position = player.currentPosition
                 val duration = player.duration
-                // 更新通知或广播给 Activity
-                updateNotification(position, duration)
-                broadcastProgress(position, duration)
+                if (duration > 0 && position > 0) {
+                    // 更新通知或广播给 Activity
+                    updateNotification(position, duration)
+                    broadcastProgress(position, duration)
+                }
                 delay(1000L) // 每秒更新一次
             }
         }
     }
 
-    private fun updateNotification(position: Long, duration: Long) {
+    private fun updateNotification(position: Long = 0, duration: Long = 0) {
         // 更新通知中的进度
         val progress = if (duration > 0) (position * 100 / duration).toInt() else 0
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Playing Music")
-            .setContentText("Progress: ${progress}%")
-            .setSmallIcon(android.R.drawable.ic_media_play)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(player.mediaMetadata.title ?: "Title")
+            .setContentText(player.mediaMetadata.artist ?: "Artist")
             .setProgress(100, progress, false)
-            .setOnlyAlertOnce(true)
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setOngoing(true)
+            .build()
 
-        startForeground(NOTIFICATION_ID, builder.build())
+        startForeground(NOTIFICATION_ID, notification)
     }
 
 
@@ -90,7 +93,7 @@ class MusicPlayService: Service() {
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
-        startForegroundServiceWithNotification()
+        updateNotification()
     }
 
     fun playSong(song: Song) {
@@ -128,18 +131,6 @@ class MusicPlayService: Service() {
         player.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-    }
-
-    private fun startForegroundServiceWithNotification() {
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Music Player")
-            .setContentText("Playing your track...")
-            .setProgress(100, 0, false)
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setOngoing(true)
-            .build()
-
-        startForeground(NOTIFICATION_ID, notification)
     }
 
     override fun onDestroy() {

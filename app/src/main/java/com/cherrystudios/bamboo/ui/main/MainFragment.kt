@@ -36,6 +36,7 @@ import com.cherrystudios.bamboo.databinding.FragmentMainBinding
 import com.cherrystudios.bamboo.service.MusicPlayService
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import kotlin.jvm.java
 
 class MainFragment : BaseFragment() {
@@ -60,6 +61,7 @@ class MainFragment : BaseFragment() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val pos = intent?.getLongExtra(EXTRA_POSITION, 0L) ?: 0L
             val dur = intent?.getLongExtra(EXTRA_DURATION, 0L) ?: 0L
+            Timber.d("progress: $pos / $dur")
             binding.playControl.progressHorizontal.progress = ((pos * 100) / dur).toInt()
         }
     }
@@ -207,9 +209,9 @@ class MainFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        context?.run {
+        activity?.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS), Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS), Context.RECEIVER_EXPORTED)
             } else {
                 registerReceiver(progressReceiver, IntentFilter(ACTION_MUSIC_PROGRESS))
             }
@@ -218,7 +220,7 @@ class MainFragment : BaseFragment() {
 
     override fun onPause() {
         super.onPause()
-        context?.run {
+        activity?.run {
             unregisterReceiver(progressReceiver)
         }
     }

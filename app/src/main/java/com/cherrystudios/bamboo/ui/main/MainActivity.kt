@@ -1,9 +1,9 @@
-package com.cherrystudios.bamboo
+package com.cherrystudios.bamboo.ui.main
 
 import android.os.Bundle
+import com.cherrystudios.bamboo.R
 import com.cherrystudios.bamboo.base.BaseActivity
 import com.cherrystudios.bamboo.databinding.ActivityMainBinding
-import com.cherrystudios.bamboo.ui.main.MainFragment
 
 class MainActivity : BaseActivity() {
     private lateinit var binding: ActivityMainBinding
