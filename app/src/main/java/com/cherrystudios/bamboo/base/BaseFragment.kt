@@ -8,6 +8,4 @@ import androidx.fragment.app.Fragment
  * @author john
  * @since 2023-11-15
  */
-open class BaseFragment : Fragment() {
-
-}
+open class BaseFragment : Fragment()

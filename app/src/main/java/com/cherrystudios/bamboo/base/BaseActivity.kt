@@ -8,6 +8,4 @@ import androidx.appcompat.app.AppCompatActivity
  * @author john
  * @since 2023-11-15
  */
-open class BaseActivity: AppCompatActivity() {
-
-}
+open class BaseActivity: AppCompatActivity()

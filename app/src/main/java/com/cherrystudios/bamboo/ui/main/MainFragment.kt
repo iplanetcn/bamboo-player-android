@@ -28,7 +28,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.cherrystudios.bamboo.R
 import com.cherrystudios.bamboo.adapter.MusicItemAdapter
-import com.cherrystudios.bamboo.adapter.MusicItemAdapterV2
 import com.cherrystudios.bamboo.base.BaseFragment
 import com.cherrystudios.bamboo.constant.ACTION_MUSIC_PROGRESS
 import com.cherrystudios.bamboo.constant.EXTRA_DURATION
