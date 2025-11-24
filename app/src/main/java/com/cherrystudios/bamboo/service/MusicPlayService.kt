@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Binder
 import android.os.IBinder
@@ -11,10 +12,13 @@ import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.image.BitmapFactoryImageDecoder
 import androidx.media3.session.MediaSession
+import coil.decode.BitmapFactoryDecoder
 import com.cherrystudios.bamboo.constant.ACTION_MUSIC_PROGRESS
 import com.cherrystudios.bamboo.constant.EXTRA_DURATION
 import com.cherrystudios.bamboo.constant.EXTRA_POSITION
+import com.cherrystudios.bamboo.helper.MusicNotificationHelper
 import com.cherrystudios.bamboo.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,15 +34,14 @@ import timber.log.Timber
  * @author john
  * @since 2025-11-12
  */
-private const val CHANNEL_ID = "music_playback"
-private const val NOTIFICATION_ID = 1
-class MusicPlayService: Service() {
+class MusicPlayService : Service() {
     private val binder = MusicBinder()
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
     private var progressJob: Job? = null
+    private lateinit var notificationHelper: MusicNotificationHelper
 
-    inner class MusicBinder: Binder() {
+    inner class MusicBinder : Binder() {
         fun getService(): MusicPlayService = this@MusicPlayService
     }
 
@@ -47,11 +50,7 @@ class MusicPlayService: Service() {
         Timber.d("Music play service #onCreate")
         player = ExoPlayer.Builder(this).build()
         mediaSession = MediaSession.Builder(this, player).build()
-        val nm = getSystemService(NotificationManager::class.java)
-        val channel = NotificationChannel(
-            CHANNEL_ID, "Music Playback", NotificationManager.IMPORTANCE_DEFAULT
-        )
-        nm.createNotificationChannel(channel)
+        notificationHelper = MusicNotificationHelper(this)
         startProgressUpdate()
     }
 
@@ -74,17 +73,17 @@ class MusicPlayService: Service() {
     }
 
     private fun updateNotification(position: Long = 0, duration: Long = 0) {
-        // 更新通知中的进度
-        val progress = if (duration > 0) (position * 100 / duration).toInt() else 0
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(player.mediaMetadata.title ?: "Title")
-            .setContentText(player.mediaMetadata.artist ?: "Artist")
-            .setProgress(100, progress, false)
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setOngoing(true)
-            .build()
-
-        startForeground(NOTIFICATION_ID, notification)
+        notificationHelper.showNotification(
+            player.mediaMetadata.title?.toString() ?: "Title",
+            player.mediaMetadata.artist?.toString() ?: "Artist",
+            player.mediaMetadata.artworkData?.run {
+                return@run BitmapFactory.decodeByteArray(this, 0, size)
+            },
+            true,
+            mediaSession,
+            position,
+            duration
+        )
     }
 
 
@@ -136,6 +135,7 @@ class MusicPlayService: Service() {
     override fun onDestroy() {
         mediaSession.release()
         player.release()
+        notificationHelper.cancelNotification()
         super.onDestroy()
     }
 

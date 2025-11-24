@@ -77,7 +77,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(project(":core"))
     testImplementation(libs.androidx.junit.ext)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.test.compose)
